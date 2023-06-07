@@ -60,3 +60,8 @@ build/
 lv_conf.h
 lv_drv_conf.h
 
+__pycache__/
+CMakeFiles/
+Makefile
+
+
