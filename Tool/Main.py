@@ -2,8 +2,10 @@ from pygccxml import utils
 from pygccxml import declarations as Declarations
 from pygccxml import parser as Parser
 import os
+import shutil
 from Basics import *
 import Widgets
+import Paths
 
 # - PyGCCXML configuration
 
@@ -15,28 +17,19 @@ XML_Generator_Configuration = Parser.xml_generator_configuration_t(
 
 # - Parse LVGL header
 
-Decl = Parser.parse([Get_LVGL_Header_Path()], XML_Generator_Configuration)
+Decl = Parser.parse([Paths.Get_LVGL_Header_Path()], XML_Generator_Configuration)
+
+# - Create generation folder
+
+Paths.Create_Bindings_Folder(True)
+
 
 # - Explore 
 
 Global_Namespace = Declarations.get_global_namespace(Decl)
 
-print(type(Global_Namespace.declarations))
+Widgets.Generate_All_Bindings(Declarations.get_global_namespace(Decl))
 
-for Widget in Widgets.Widgets_List:
-    print("== Widget", Widget[1], "==")
-
-    print ("=== Functions")
-
-    for Declaration in Global_Namespace.free_functions():
-        if (Get_Name(Declaration).startswith("lv_" + Widget[0])):
-            print(Get_Name(Declaration))
-
-
-    print ("=== Variables")
-    for Declaration in Global_Namespace.variables():
-        if (Get_Name(Declaration).startswith("lv_" + Widget[0])):
-            print(Get_Name(Declaration))
 
 print("=== Global var")
 
