@@ -2,12 +2,14 @@ from pygccxml import utils
 from pygccxml import declarations as Declarations
 from pygccxml import parser as Parser
 
-from Basics import *
+import Basics
 import Paths
 
+import os
+
 Widgets_List = [["obj","Object"],
-                ["obj_has","?"],
-                ["obj_get","?"],
+                #["obj_has","?"],
+                #["obj_get","?"],
                 ["img","Image"],
                 ["animimg","Animated_Image"],
                 ["arc","Arc"],
@@ -59,8 +61,6 @@ Widgets_List = [["obj","Object"],
 
 
 def Generate_All_Bindings(Global_Namespace):
-
-
     for Widget in Widgets_List:
         Generate_Bindings(Widget[0], Widget[1], Global_Namespace)
 
@@ -79,6 +79,7 @@ def Get_Type_Name(Widget_Name):
 
 def Write_Header_Header(Widget_Name, File):
     File.write("#pragma once\n")
+    File.write("#include <memory>\n")
     File.write("#include \"lvgl.h\"\n\n")
     if Widget_Name != "Object":
         File.write("#include \"Object.hpp\"\n\n")
@@ -103,6 +104,103 @@ def Write_Source_Header(Widget_Name, File):
 def Write_Source_Footer(Widget_Name, File):
     pass
 
+def Get_New_Widget_Name(Widget_Name):
+    for Widget in Widgets_List:
+        if Widget[0] == Widget_Name:
+            return Widget[1]
+    return None
+
+def Get_Method_Declaration(Widget_Name, New_Widget_Name, Declaration, Add_Class_Name = False):
+    D = ""
+    
+    if not(Basics.Is_Constructor(Declaration) or Basics.Is_Destructor(Declaration)):
+        print(str(Declaration.return_type) + " : " + str(type(Declaration.return_type)))
+        if Basics.Is_Pointer(Declaration.return_type):
+            Base = Declaration.return_type.base
+            print("base : ", str(Base))
+            if Basics.Is_Constant(Base):
+                D += "const "
+                Base = Base.base
+
+
+            print("base : ", str(type(Base)))
+
+            if Basics.Is_Declarated(Base):
+                Declaration_String = Base.declaration.decl_string.replace("::", "").replace("lv_", "").replace("_t", "")
+                New_Type_Name = Get_New_Widget_Name(Declaration_String)
+                if New_Type_Name == None:
+                    D += Base.decl_string + "* "
+                else:
+                    D += New_Type_Name + "* "
+            else:
+                D += Basics.Get_Type_Name(Base) + "& "
+                
+
+            D += Basics.Get_Type_Name(Base) + "* "
+
+    
+        else:
+            D += Basics.Get_Type_Name(Declaration.return_type) + " " 
+
+
+    if Add_Class_Name:
+        D += New_Widget_Name + "_Class::"
+
+    if Basics.Is_Constructor(Declaration):
+        D += New_Widget_Name + "_Class(" + "Object_Class& Parent, "
+    elif Basics.Is_Destructor(Declaration):
+        if not(Add_Class_Name):
+            D += "virtual "
+        D += "~" + New_Widget_Name + "_Class("
+    else:
+        D += Basics.Get_Method_Name(Widget_Name, New_Widget_Name, Declaration) + "("
+
+    for i, Argument in enumerate(Declaration.arguments):
+        if i == 0 and Basics.Is_This_Argument(Argument):
+            continue
+
+        D += Basics.Get_Type_Name(Argument.decl_type) + " " + Argument.name + ", "
+
+    if D.endswith(", "):
+        D = D[:-2]
+
+    return D + ")"
+
+def Get_Method_Definition(Widget_Name, New_Widget_Name, Declaration):
+    D = Get_Method_Declaration(Widget_Name, New_Widget_Name, Declaration, True) + "\n{\n"
+
+    if Basics.Is_Constructor(Declaration):
+        D += "\tLVGL_Pointer = " + Basics.Get_Name(Declaration) + "("
+    elif Basics.Is_Destructor(Declaration):
+        D += "\t" + Basics.Get_Name(Declaration) + "("
+    else:
+        if type(Declaration.return_type) == Declarations.cpptypes.void_t:
+            D += "\t" + Basics.Get_Name(Declaration) + "("
+        else:    
+            D += "\treturn " + Basics.Get_Name(Declaration) + "("
+
+    for i, Argument in enumerate(Declaration.arguments):
+        if i == 0 and Basics.Is_This_Argument(Argument):
+            if Basics.Is_Constructor(Declaration):
+                D += "Parent.Get_LVGL_Pointer(), "
+            else:
+                D += "LVGL_Pointer, "
+            continue
+
+        D += Argument.name + ", "
+
+    if D.endswith(", "):
+        D = D[:-2]
+
+    D += ");\n"
+
+    if Basics.Is_Destructor(Declaration):
+        D += "\tClear_Pointer();\n"
+
+    D += "}\n"
+
+    return D
+
 def Generate_Bindings(Widget_Name, New_Widget_Name, Global_Namespace):
 
     # - Header
@@ -113,17 +211,23 @@ def Generate_Bindings(Widget_Name, New_Widget_Name, Global_Namespace):
     # - - Methods
 
     for Declaration in Global_Namespace.free_functions():
-        if Get_Name(Declaration).startswith("lv_" + Widget_Name):
+        if Basics.Get_Name(Declaration).startswith("lv_" + Widget_Name):
             Header_File.write("\t\t" + Get_Method_Declaration(Widget_Name, New_Widget_Name, Declaration) + ";\n")
     
     if New_Widget_Name == "Object":
         Header_File.write("\t\tinline " + New_Widget_Name + "_Class() : LVGL_Pointer(NULL) { };\n")
         Header_File.write("\t\tinline lv_obj_t* Get_LVGL_Pointer() const { return LVGL_Pointer; };\n")
+        Header_File.write("\t\tinline void Clear_Pointer() { LVGL_Pointer = NULL; };\n")
+
+    Header_File.write("\n")
 
     # - - Attributes
 
-    Header_File.write("\tprotected:\n")
-    Header_File.write("\t\tlv_obj_t* LVGL_Pointer;\n")
+    Header_File.write("\t\tstatic const lv_obj_class_t& Class;\n")
+
+    if New_Widget_Name == "Object":
+        Header_File.write("\tprotected:\n")
+        Header_File.write("\t\tlv_obj_t* LVGL_Pointer;\n")
 
     Write_Header_Footer(New_Widget_Name, Header_File)
 
@@ -135,10 +239,15 @@ def Generate_Bindings(Widget_Name, New_Widget_Name, Global_Namespace):
 
     Write_Source_Header(New_Widget_Name, Source_File)
 
+    # - - Attributes
+
+    Source_File.write(f"const lv_obj_class_t& {Get_Class_Name(New_Widget_Name)}::Class = lv_{Widget_Name}_class;\n\n")
+
+    # - - Methods
 
     for Declaration in Global_Namespace.free_functions():
 
-        if Get_Name(Declaration).startswith("lv_" + Widget_Name):
+        if Basics.Get_Name(Declaration).startswith("lv_" + Widget_Name):
             Source_File.write(Get_Method_Definition(Widget_Name, New_Widget_Name, Declaration) + "\n\n")
 
     Write_Source_Footer(New_Widget_Name, Source_File)
@@ -148,7 +257,5 @@ def Generate_Bindings(Widget_Name, New_Widget_Name, Global_Namespace):
 
     print ("=== Variables")
     for Declaration in Global_Namespace.variables():
-        if Get_Name(Declaration).startswith("lv_" + Widget_Name):
-            print(Get_Name(Declaration))
-
-
+        if Basics.Get_Name(Declaration).startswith("lv_" + Widget_Name):
+            print(Basics.Get_Name(Declaration))

@@ -1,5 +1,8 @@
 import os
 import re
+from pygccxml import declarations
+from pygccxml.declarations import type_traits as Type_Traits
+import inspect
 
 def Get_Name(Declaration):
     return Declaration.name
@@ -24,61 +27,17 @@ def Is_Constructor(Declaration):
 def Is_Destructor(Declaration):
     return Get_Name(Declaration).endswith("del")
 
-def Get_Method_Declaration(Widget_Name, New_Widget_Name, Declaration, Add_Class_Name = False):
-    D = ""
-    
-    if not(Is_Constructor(Declaration) or Is_Destructor(Declaration)):
-        D += Get_Type_Name(Declaration.return_type) + " " 
+def Is_Pointer(Declaration):
+    return type(Declaration) == declarations.cpptypes.pointer_t
 
-    
-    if Add_Class_Name:
-        D += New_Widget_Name + "_Class::"
+def Is_Constant(Declaration):
+    return type(Declaration) == declarations.cpptypes.const_t
 
-    if Is_Constructor(Declaration):
-        D += New_Widget_Name + "_Class(" + "Object_Class& Parent, "
-    elif Is_Destructor(Declaration):
-        if not(Add_Class_Name):
-            D += "virtual "
-        D += "~" + New_Widget_Name + "_Class("
-    else:
-        D += Get_Method_Name(Widget_Name, New_Widget_Name, Declaration) + "("
+def Is_Elabored_Type(Declaration):
+    return Type_Traits.is_elaborated(Declaration)
 
-    for i, Argument in enumerate(Declaration.arguments):
-        if i == 0 and Is_This_Argument(Argument):
-            continue
+def Is_Declarated(Declaration):
+    return type(Declaration) == declarations.cpptypes.declarated_t
 
-        D += Get_Type_Name(Argument.decl_type) + " " + Argument.name + ", "
+#def Convert_To_New_Type(Declaration):
 
-    if D.endswith(", "):
-        D = D[:-2]
-
-    return D + ")"
-
-def Get_Method_Definition(Widget_Name, New_Widget_Name, Declaration):
-    D = Get_Method_Declaration(Widget_Name, New_Widget_Name, Declaration, True) + "\n{\n"
-
-    if Is_Constructor(Declaration):
-        D += "\tLVGL_Pointer = " + Get_Name(Declaration) + "("
-    elif Is_Destructor(Declaration):
-        D += "\t" + Get_Name(Declaration) + "("
-    else:
-        D += "\treturn " + Get_Name(Declaration) + "("
-
-    for i, Argument in enumerate(Declaration.arguments):
-        if i == 0 and Is_This_Argument(Argument):
-            if Is_Constructor(Declaration):
-                D += "Parent.Get_LVGL_Pointer(), "
-            else:
-                D += "LVGL_Pointer, "
-            continue
-
-        D += Argument.name + ", "
-
-    if D.endswith(", "):
-        D = D[:-2]
-
-    D += ");\n"
-
-    D += "}\n"
-
-    return D

@@ -20,6 +20,8 @@ def Create_Bindings_Folder(Remove_Existing_Folder = False):
     if Remove_Existing_Folder and os.path.isdir(Get_Bindings_Folder_Path()):
         shutil.rmtree(Get_Bindings_Folder_Path())
 
+
+
     os.mkdir(Get_Bindings_Folder_Path())
 
     os.mkdir(Get_Bindings_Header_Path())

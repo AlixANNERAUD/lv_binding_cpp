@@ -1,0 +1,16 @@
+{
+    "files.associations": {
+        "*.XRF": "json",
+        "*.rst": "restructuredtext",
+        "atomic": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "memory_resource": "cpp",
+        "functional": "cpp",
+        "iosfwd": "cpp",
+        "system_error": "cpp"
+    }
+}
