@@ -64,4 +64,6 @@ __pycache__/
 CMakeFiles/
 Makefile
 
-Bindings/
+LVGL_Cpp/include
+LVGL_Cpp/src
+
