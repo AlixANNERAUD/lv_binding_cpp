@@ -3,6 +3,8 @@ from pygccxml import declarations
 from pygccxml import parser as Parser
 
 import re
+import Widget
+import Style
 
 import Type
 import Variable
@@ -27,10 +29,16 @@ class Method_Class:
         return re.sub(r"(^|_)([a-z])", lambda m: m.group(1) + m.group(2).upper(), New_Method_Name)
 
     def Is_Constructor(self):
-        return self.Get_Old_Name().endswith("_create")
+        if isinstance(self.Widget, Widget.Widget_Class):
+            return self.Get_Old_Name().endswith("_create")
+        elif isinstance(self.Widget, Style.Style_Class):
+            return self.Get_Old_Name().endswith("_init")
 
     def Is_Destructor(self):
-        return self.Get_Old_Name().endswith("_del")
+        if isinstance(self.Widget, Widget.Widget_Class):
+            return self.Get_Old_Name().endswith("_del")
+        elif isinstance(self.Widget, Style.Style_Class):
+            return self.Get_Old_Name().endswith("_reset")
     
     def Get_Return_Type(self):
         return Type.Type_Class(self.Declaration.return_type)
@@ -64,9 +72,15 @@ class Method_Class:
                 D += Basics.Get_Type_Name(Declaration.return_type) + " " 
 
     def Has_This_Argument(self):
+        if len(self.Declaration.arguments) == 0:
+            return False
+
         First_Argument_Type = Type.Type_Class(self.Declaration.arguments[0].decl_type)
 
-        return "lv_obj_t*" in First_Argument_Type.Get_String().replace(" ", "").replace("const", "") and not(self.Is_Constructor())
+        if isinstance(self.Widget, Widget.Widget_Class):
+            return "lv_obj_t*" in First_Argument_Type.Get_String().replace(" ", "").replace("const", "") and not(self.Is_Constructor())
+        elif isinstance(self.Widget, Style.Style_Class):
+            return "lv_style_t*" in First_Argument_Type.Get_String().replace(" ", "").replace("const", "")
 
     def Get_Arguments(self):
         A = []
@@ -139,9 +153,6 @@ class Method_Class:
             D = D[:-2]
 
         D += ");\n"
-
-        if self.Is_Destructor():
-            D += "\tClear_Pointer();\n"
 
         D += "}\n"
 

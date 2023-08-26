@@ -8,6 +8,7 @@ from Basics import *
 import Type
 
 import Widget
+import Style
 
 #import Widgets
 import Paths
@@ -38,8 +39,10 @@ Global_Namespace = Declarations.get_global_namespace(Decl)
 
 Widget.Widget_Class.Generate_All_Bindings(Global_Namespace)
 
+Style.Style_Class(Global_Namespace).Generate_Bindings()
+
 #for Function in Global_Namespace.free_functions():
-#    M = Method.Method_Class(Function)
+#    print(Function)
 
 #    if (Get_Name(Function).startswith("lv_")):
 #        print("---------------")
@@ -84,5 +87,3 @@ for _, Name in Widget.Widget_Class.List:
     Main_Header_File.write("#include \"" + Name + ".hpp\"\n")
 
 Main_Header_File.close()
-
-print("== Library json file")

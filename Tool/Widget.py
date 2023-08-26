@@ -80,13 +80,15 @@ class Widget_Class:
                 self.Name = N
 
         # Delete file if it's exists
-        if os.path.exists(os.path.join(Paths.Get_Bindings_Header_Path(), self.Name + ".hpp")):
-            os.remove(os.path.join(Paths.Get_Bindings_Header_Path(), self.Name + ".hpp"))
-        if os.path.exists(os.path.join(Paths.Get_Bindings_Source_Path(), self.Name + ".cpp")):
-            os.remove(os.path.join(Paths.Get_Bindings_Source_Path(), self.Name + ".cpp"))
+        Header_File_Path = os.path.join(Paths.Get_Bindings_Header_Path(), self.Name + ".hpp")
+        if os.path.exists(Header_File_Path):
+            os.remove(Header_File_Path)
+        Source_File_Path = os.path.join(Paths.Get_Bindings_Source_Path(), self.Name + ".cpp")
+        if os.path.exists(Source_File_Path):
+            os.remove(Source_File_Path)
 
-        self.Header_File = open(os.path.join(Paths.Get_Bindings_Header_Path(), self.Name + ".hpp"), "w")
-        self.Source_File = open(os.path.join(Paths.Get_Bindings_Source_Path(), self.Name + ".cpp"), "w")
+        self.Header_File = open(Header_File_Path, "w")
+        self.Source_File = open(Source_File_Path, "w")
         # Check if file is open
         if not self.Header_File or not self.Source_File:
             raise print("Can't open file")
@@ -94,24 +96,10 @@ class Widget_Class:
 
         self.Methods = []
 
-        try:
-            self.Header_File.write("// Auto generated file\n\n")
-            print("Success")
-        except:
-            raise print("Can't write to file")
-        
-        self.Source_File.write("// Auto generated file\n\n")
-
-
-        print(f"Opening file : {os.path.join(Paths.Get_Bindings_Header_Path(), self.Name + '.hpp')}")
-        print(f"Opening file : {os.path.join(Paths.Get_Bindings_Source_Path(), self.Name + '.cpp')}")
-
         for Function in Namespace.free_functions():
             if Function.name.startswith("lv_" + self.Old_Name + "_"):
                 self.Methods.append(Method.Method_Class(self, Function))
                 
-        print(f"Found {len(self.Methods)} methods")
-
     def __del__(self):
         self.Header_File.close()
         self.Source_File.close()
@@ -129,8 +117,9 @@ class Widget_Class:
         return self.Name + "_Class"
 
     def Write_Header_Header(self):
+        self.Header_File.write("// Auto generated file\n\n")
+
         self.Header_File.write("#pragma once\n")
-        self.Header_File.write("#include <memory>\n")
         self.Header_File.write("#include \"lvgl.h\"\n\n")
 
         if self.Name != "Object":
@@ -147,10 +136,39 @@ class Widget_Class:
         self.Header_File.write("    public:\n")
 
     def Write_Header_Footer(self):
+        self.Header_File.write("\n")
+
+        # - Methods
+
+        # - - Constructors
+
+        if self.Get_Name() == "Object":
+            self.Header_File.write("\t\tinline lv_obj_t* Get_LVGL_Pointer() const { return LVGL_Pointer; };\n")
+            self.Header_File.write("\t\tinline void Clear_Pointer() { LVGL_Pointer = NULL; };\n")
+            self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "(lv_obj_t* LVGL_Pointer) : LVGL_Pointer(LVGL_Pointer) { };\n")
+        
+        else:
+            self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "(lv_obj_t* LVGL_Pointer) : Object_Class(LVGL_Pointer) { };\n")
+
+        self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "() = delete;\n")
+        self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "(" + self.Get_Class_Name() + "&& Object_To_Move) : Object_Class((lv_obj_t*)Object_To_Move) { Object_To_Move.Clear_Pointer(); }")
+        # - - Operators
+        self.Header_File.write("\t\tinline operator lv_obj_t*() const { return this->Get_LVGL_Pointer(); };\n\n")
+
+        # - - Attributes
+
+        self.Header_File.write("\t\tstatic const lv_obj_class_t& Class;\n")
+
+        if self.Get_Name() == "Object":
+            self.Header_File.write("\tprotected:\n")
+            self.Header_File.write("\t\tlv_obj_t* LVGL_Pointer;\n")
+
         self.Header_File.write("    } " + self.Get_Type_Name() + ";\n")
         self.Header_File.write("}\n")
 
     def Write_Source_Header(self):
+        self.Source_File.write("// Auto generated file\n\n")
+
         self.Source_File.write("#include \"" + self.Name + ".hpp\"\n\n")
         self.Source_File.write("using namespace LVGL;\n\n")
 
@@ -167,28 +185,7 @@ class Widget_Class:
         for Method in self.Methods:
             self.Header_File.write("\t\t" + Method.Get_Prototype() + ";\n")
 
-        self.Header_File.write("\n")
-
-        if self.Get_Name() == "Object":
-            self.Header_File.write("\t\tinline lv_obj_t* Get_LVGL_Pointer() const { return LVGL_Pointer; };\n")
-            self.Header_File.write("\t\tinline void Clear_Pointer() { LVGL_Pointer = NULL; };\n")
-            self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "(lv_obj_t* LVGL_Pointer) : LVGL_Pointer(LVGL_Pointer) { };\n")
         
-        else:
-            self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "(lv_obj_t* LVGL_Pointer) : Object_Class(LVGL_Pointer) { };\n")
-
-        self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "() = delete;\n")
-
-        self.Header_File.write("\t\tinline operator lv_obj_t*() const { return this->Get_LVGL_Pointer(); };\n\n")
-
-        # - - Attributes
-
-        self.Header_File.write("\t\tstatic const lv_obj_class_t& Class;\n")
-
-        if self.Get_Name() == "Object":
-            self.Header_File.write("\tprotected:\n")
-            self.Header_File.write("\t\tlv_obj_t* LVGL_Pointer;\n")
-
         self.Write_Header_Footer()
 
         # - Source
@@ -213,9 +210,7 @@ class Widget_Class:
 
     def Generate_All_Bindings(Namespace):
         for Widget_Old_Name, _ in Widget_Class.List:
-            print("------------------")
             W = Widget_Class(Widget_Old_Name, Namespace)
-            print(W.Get_Type_Name())
             W.Generate_Bindings()
             #for Method in W.Methods:
                 #print(f"{Method.Get_Old_Name()} -> {Method.Get_New_Name()}() : {Method.Get_Return_Type().Get_Converted_String()}")

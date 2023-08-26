@@ -41,7 +41,8 @@ class Declaration_Class:
 class Type_Class:
 
     Class_Conversion_List = [
-        ["lv_obj_t", "Object_Class"]
+        ["lv_obj_t", "Object_Class"],
+        ["lv_style_t", "Style_Class"]
     ]
 
     def __init__(self, Declaration):
@@ -161,7 +162,6 @@ class Type_Class:
         elif Type_Declarated.Is_Pointer():
             if Type_Declarated.Get_Base().Is_Function():
                 Middle += Type.Get_String()
-                print("Function !")
         elif Type_Declarated.Is_Declarated():
             if Type_Declarated.Get_Declaration().Is_Class():
                 Keep_Regular_Name = True

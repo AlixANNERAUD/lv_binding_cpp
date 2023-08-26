@@ -18,9 +18,6 @@ def Get_Method_Name(Widget_Name, New_Widget_Name, Declaration):
 
     return re.sub(r"(^|_)([a-z])", lambda m: m.group(1) + m.group(2).upper(), Method_Name)
 
-def Is_This_Argument(Argument):
-    return "lv_obj_t*" in Get_Type_Name(Argument.decl_type).replace(" ", "").replace("const", "")
-
 def Is_Elabored_Type(Declaration):
     return Type_Traits.is_elaborated(Declaration)
 
