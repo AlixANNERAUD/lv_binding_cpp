@@ -99,7 +99,7 @@ class Widget_Class:
         for Function in Namespace.free_functions():
             if Function.name.startswith("lv_" + self.Old_Name + "_"):
                 self.Methods.append(Method.Method_Class(self, Function))
-                
+
     def __del__(self):
         self.Header_File.close()
         self.Source_File.close()
@@ -122,9 +122,12 @@ class Widget_Class:
         self.Header_File.write("#pragma once\n")
         self.Header_File.write("#include \"lvgl.h\"\n\n")
 
-        if self.Name != "Object":
+        if self.Name == "Object":
+            self.Header_File.write("#include \"Style.hpp\"\n\n")
+        else:
             self.Header_File.write("#include \"Object.hpp\"\n\n")
         
+
         self.Header_File.write("namespace LVGL\n")
         self.Header_File.write("{\n")
         self.Header_File.write("    typedef class " + self.Get_Class_Name())
@@ -143,10 +146,10 @@ class Widget_Class:
         # - - Constructors
 
         if self.Get_Name() == "Object":
+            self.Header_File.write("\t\tinline static Object_Class Get_Current_Screen() { return lv_scr_act(); };\n")
             self.Header_File.write("\t\tinline lv_obj_t* Get_LVGL_Pointer() const { return LVGL_Pointer; };\n")
             self.Header_File.write("\t\tinline void Clear_Pointer() { LVGL_Pointer = NULL; };\n")
             self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "(lv_obj_t* LVGL_Pointer) : LVGL_Pointer(LVGL_Pointer) { };\n")
-        
         else:
             self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "(lv_obj_t* LVGL_Pointer) : Object_Class(LVGL_Pointer) { };\n")
 

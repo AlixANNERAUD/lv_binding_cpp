@@ -9,6 +9,7 @@ import Type
 
 import Widget
 import Style
+import Color
 
 #import Widgets
 import Paths
@@ -32,7 +33,6 @@ Decl = Parser.parse([Paths.Get_LVGL_Header_Path()], XML_Generator_Configuration)
 
 Paths.Create_Bindings_Folder(True)
 
-
 # - Explore 
 
 Global_Namespace = Declarations.get_global_namespace(Decl)
@@ -40,6 +40,9 @@ Global_Namespace = Declarations.get_global_namespace(Decl)
 Widget.Widget_Class.Generate_All_Bindings(Global_Namespace)
 
 Style.Style_Class(Global_Namespace).Generate_Bindings()
+
+Color.Color_Class(Global_Namespace).Generate_Bindings()
+
 
 #for Function in Global_Namespace.free_functions():
 #    print(Function)

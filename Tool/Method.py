@@ -5,6 +5,7 @@ from pygccxml import parser as Parser
 import re
 import Widget
 import Style
+import Color
 
 import Type
 import Variable
@@ -79,6 +80,8 @@ class Method_Class:
 
         if isinstance(self.Widget, Widget.Widget_Class):
             return "lv_obj_t*" in First_Argument_Type.Get_String().replace(" ", "").replace("const", "") and not(self.Is_Constructor())
+        elif isinstance(self.Widget, Color.Color_Class):
+            return "lv_color_t" in First_Argument_Type.Get_String().replace(" ", "").replace("const", "")
         elif isinstance(self.Widget, Style.Style_Class):
             return "lv_style_t*" in First_Argument_Type.Get_String().replace(" ", "").replace("const", "")
 
@@ -96,10 +99,12 @@ class Method_Class:
         D = ""
 
         if not(For_Definition):
-            if self.Is_Constructor():
+            if self.Is_Constructor() and isinstance(self.Widget, Widget.Widget_Class):
                 D += "explicit "
             elif self.Is_Destructor():
                 D += "virtual "
+            elif not(self.Has_This_Argument()):
+                D += "static "
 
         if not(self.Is_Constructor()) and not(self.Is_Destructor()):
             D += self.Get_Return_Type().Get_Converted_String() + " "
@@ -129,10 +134,12 @@ class Method_Class:
 
         D = self.Get_Prototype(True) + "\n{\n"
 
-        if self.Is_Constructor():
+        if self.Is_Constructor() and isinstance(self.Widget, Widget.Widget_Class):
             D = D.replace("\n{\n", "")
             D += " : Object_Class(NULL) \n{\n"
             D += "\tLVGL_Pointer = " + self.Get_Old_Name() + "("
+            
+          
         elif self.Is_Destructor():
             D += "\t" + self.Get_Old_Name() + "("
         else:
@@ -144,7 +151,12 @@ class Method_Class:
         # Arguments
 
         if self.Has_This_Argument():
-            D += "LVGL_Pointer, "
+            if isinstance(self.Widget, Widget.Widget_Class):
+                D += "LVGL_Pointer, "
+            elif isinstance(self.Widget, Color.Color_Class):
+                D += "LVGL_Color, "
+            elif isinstance(self.Widget, Style.Style_Class):
+                D += "&LVGL_Style, "
 
         for Argument in self.Get_Arguments():
             D += Argument.Get_New_Name() + ", "
