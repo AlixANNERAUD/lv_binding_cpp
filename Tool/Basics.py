@@ -6,6 +6,8 @@ import inspect
 
 import Paths
 
+Library_Namespace = "LVGL"
+
 def Open_Main_Header_File():
     return open(os.path.join(Paths.Get_Bindings_Header_Path(), "LVGL_Cpp.hpp"), "w")
 

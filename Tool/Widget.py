@@ -4,54 +4,56 @@ from pygccxml import parser as Parser
 
 import Basics
 import Paths
+import difflib
 
 import os
 
 import Method
 import Type
 
+import Base
+
 # Currently ignoring widgets due to ambiguous naming
     
 
 
 
-class Widget_Class:
+class Widget_Class(Base.Base_Class):
 
     List = [["obj","Object"],
-                #["obj_has","?"],
-                #["obj_get","?"],
-#                ["img","Image"],
+                ["img","Image"],
                 ["animimg","Animated_Image"],
                 ["arc","Arc"],
                 ["label","Label"],
                 ["bar","Bar"],
                 ["btn","Button"],
                 ["btnmatrix","Button_Matrix"],
- #                ["calendar","Calendar"],
-#                ["calendar_header_arrow","Calendar_Header_Arrow"],
-#                ["calendar_header_dropdown","Calendar_Header_Dropdown"],
+                ["calendar","Calendar"],
+                ["calendar_header_arrow","Calendar_Header_Arrow"],
+                ["calendar_header_dropdown","Calendar_Header_Dropdown"],
                 ["canvas","Canvas"],
                 ["chart","Chart"],
                 ["checkbox","Checkbox"],
                 ["colorwheel","Colorwheel"],
                 ["dropdown","Dropdown"],
                 ["dropdownlist","Dropdown_List"],
-#                ["imgbtn","Image_Button"],
+                ["group", "Group"],
+                ["imgbtn","Image_Button"],
                 ["keyboard","Keyboard"],
                 ["led","LED"],
                 ["line","Line"],
                 ["list","List"],
                 ["list_text","List_Text"],
                 ["list_btn","List_Button"],
-#                ["menu","Menu"],
-#                ["menu_page","Menu_Page"],
-#                ["menu_cont","Menu_Content"],
-#                ["menu_section","Menu_Section"],
-#                ["menu_separator","Menu_Separator"],
-#                ["menu_sidebar_cont","Menu_Sidebar_Content"],
-#                ["menu_main_cont","Menu_Main_Content"],
-#                ["menu_sidebar_header_cont","Menu_Sidebar_Header_Content"],
-#                ["menu_main_header_cont","Menu_Main_Header_Content"],
+                ["menu","Menu"],
+                ["menu_page","Menu_Page"],
+                ["menu_cont","Menu_Content"],
+                ["menu_section","Menu_Section"],
+                ["menu_separator","Menu_Separator"],
+                ["menu_sidebar_cont","Menu_Sidebar_Content"],
+                ["menu_main_cont","Menu_Main_Content"],
+                ["menu_sidebar_header_cont","Menu_Sidebar_Header_Content"],
+                ["menu_main_header_cont","Menu_Main_Header_Content"],
                 ["meter","Meter"],
                 ["msgbox","Message_Box"],
                 ["msgbox_content","Message_Box_Content"],
@@ -69,6 +71,33 @@ class Widget_Class:
                 ["tileview_tile","Tileview_Tile"],
                 ["win", "Window"]]
 
+    def Is_Method_Excluded(self, Method):
+        
+        Best_Match = None
+        Best_Match_Score = 0
+
+        Splited_Method_Name = Method.name.replace("lv_", "").split("_")
+
+        for Widget_Name, _ in Widget_Class.List:
+            Current_Score = 0
+
+            Splited_Widget_Name = Widget_Name.split("_")
+            
+            for i in range(min(len(Splited_Method_Name), len(Splited_Widget_Name))):
+                if Splited_Method_Name[i] == Splited_Widget_Name[i]:
+                    Current_Score += 1
+                else:
+                    break
+
+            if Current_Score > Best_Match_Score:
+                Best_Match = Widget_Name
+                Best_Match_Score = Current_Score
+
+        if Best_Match == None or self.Get_Old_Type_Name() != Best_Match or Method.name.startswith("lv_img_decoder"):        
+            print(f"Method {Method.name} is not in the right class {self.Get_Old_Type_Name()} != {Best_Match}")
+            return True
+
+        return False
 
     def __init__(self, Old_Name, Namespace):
 
@@ -79,64 +108,20 @@ class Widget_Class:
             if O == Old_Name:
                 self.Name = N
 
-        # Delete file if it's exists
-        Header_File_Path = os.path.join(Paths.Get_Bindings_Header_Path(), self.Name + ".hpp")
-        if os.path.exists(Header_File_Path):
-            os.remove(Header_File_Path)
-        Source_File_Path = os.path.join(Paths.Get_Bindings_Source_Path(), self.Name + ".cpp")
-        if os.path.exists(Source_File_Path):
-            os.remove(Source_File_Path)
-
-        self.Header_File = open(Header_File_Path, "w")
-        self.Source_File = open(Source_File_Path, "w")
-        # Check if file is open
-        if not self.Header_File or not self.Source_File:
-            raise print("Can't open file")
-
-
-        self.Methods = []
-
-        for Function in Namespace.free_functions():
-            if Function.name.startswith("lv_" + self.Old_Name + "_"):
-                self.Methods.append(Method.Method_Class(self, Function))
-
-    def __del__(self):
-        self.Header_File.close()
-        self.Source_File.close()
-
-    def Get_Old_Type_Name(self):
-        return self.Old_Name
-
-    def Get_Name(self):
-        return self.Name
-
-    def Get_Type_Name(self):
-        return self.Name + "_Type"
-
-    def Get_Class_Name(self):
-        return self.Name + "_Class"
-
-    def Write_Header_Header(self):
-        self.Header_File.write("// Auto generated file\n\n")
-
-        self.Header_File.write("#pragma once\n")
-        self.Header_File.write("#include \"lvgl.h\"\n\n")
+        Dependencies = None
+        Heritage = None
 
         if self.Name == "Object":
-            self.Header_File.write("#include \"Style.hpp\"\n\n")
+            Dependencies = ["Style", "Area"]
         else:
-            self.Header_File.write("#include \"Object.hpp\"\n\n")
-        
-
-        self.Header_File.write("namespace LVGL\n")
-        self.Header_File.write("{\n")
-        self.Header_File.write("    typedef class " + self.Get_Class_Name())
+            Heritage = "Object_Class"
+            Dependencies = ["Object"]
     
-        if self.Name != "Object":
-            self.Header_File.write(" : public Object_Class")
 
-        self.Header_File.write("\n\t{\n")
-        self.Header_File.write("    public:\n")
+        Base.Base_Class.__init__(self, Old_Name, self.Name, Namespace, Dependencies, Heritage)
+
+    def __del__(self):
+        Base.Base_Class.__del__(self)
 
     def Write_Header_Footer(self):
         self.Header_File.write("\n")
@@ -154,7 +139,7 @@ class Widget_Class:
             self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "(lv_obj_t* LVGL_Pointer) : Object_Class(LVGL_Pointer) { };\n")
 
         self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "() = delete;\n")
-        self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "(" + self.Get_Class_Name() + "&& Object_To_Move) : Object_Class((lv_obj_t*)Object_To_Move) { Object_To_Move.Clear_Pointer(); }")
+        self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "(" + self.Get_Class_Name() + "&& Object_To_Move) : Object_Class((lv_obj_t*)Object_To_Move) { Object_To_Move.Clear_Pointer(); }\n")
         # - - Operators
         self.Header_File.write("\t\tinline operator lv_obj_t*() const { return this->Get_LVGL_Pointer(); };\n\n")
 
@@ -170,46 +155,11 @@ class Widget_Class:
         self.Header_File.write("}\n")
 
     def Write_Source_Header(self):
-        self.Source_File.write("// Auto generated file\n\n")
-
-        self.Source_File.write("#include \"" + self.Name + ".hpp\"\n\n")
-        self.Source_File.write("using namespace LVGL;\n\n")
-
-    def Write_Source_Footer(self):
-        pass
-
-    def Generate_Bindings(self):
-        # - Header
-
-        self.Write_Header_Header()
-
-        # - - Methods
-
-        for Method in self.Methods:
-            self.Header_File.write("\t\t" + Method.Get_Prototype() + ";\n")
-
-        
-        self.Write_Header_Footer()
-
-        # - Source
-
-        self.Write_Source_Header()
+        Base.Base_Class.Write_Source_Header(self)
 
         # - - Attributes
 
         self.Source_File.write(f"const lv_obj_class_t& {self.Get_Class_Name()}::Class = lv_{self.Get_Old_Type_Name()}_class;\n\n")
-
-        # - - Methods
-
-        for Method in self.Methods:
-            self.Source_File.write(Method.Get_Definition() + "\n")
-
-        self.Write_Source_Footer()
-
-        #print ("=== Variables")
-        #for Declaration in Global_Namespace.variables():
-        #    if Basics.Get_Name(Declaration).startswith("lv_" + Widget_Name + "_"):
-        #        print(Basics.Get_Name(Declaration))
 
     def Generate_All_Bindings(Namespace):
         for Widget_Old_Name, _ in Widget_Class.List:
@@ -220,9 +170,4 @@ class Widget_Class:
                 #print(f"{Method.Get_Prototype()}")
                 #for A in Method.Get_Arguments():
                 #    print(f"{A.Get_Name()} : {A.Get_Type().Get_Converted_String()}")
-            
-def Get_New_Widget_Name(Widget_Name):
-    for Widget in Widgets_List:
-        if Widget[0] == Widget_Name:
-            return Widget[1]
-    return None
+        

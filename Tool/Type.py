@@ -42,8 +42,11 @@ class Type_Class:
 
     Class_Conversion_List = [
         ["lv_obj_t", "Object_Class"],
+        ["_lv_obj_t", "Object_Class"],
         ["lv_style_t", "Style_Class"],
-        ["lv_color_t", "Color_Class"]
+        ["lv_color_t", "Color_Class"],
+        ["lv_event_", "Event_Class"],
+        ["lv_area_t", "Area_Class"],
     ]
 
     def __init__(self, Declaration):

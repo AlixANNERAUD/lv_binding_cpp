@@ -3,9 +3,13 @@ from pygccxml import declarations
 from pygccxml import parser as Parser
 
 import re
+
 import Widget
 import Style
 import Color
+import Event
+import Group
+import Area
 
 import Type
 import Variable
@@ -30,13 +34,15 @@ class Method_Class:
         return re.sub(r"(^|_)([a-z])", lambda m: m.group(1) + m.group(2).upper(), New_Method_Name)
 
     def Is_Constructor(self):
-        if isinstance(self.Widget, Widget.Widget_Class):
+        if isinstance(self.Widget, Widget.Widget_Class) or isinstance(self.Widget, Group.Group_Class):
             return self.Get_Old_Name().endswith("_create")
         elif isinstance(self.Widget, Style.Style_Class):
             return self.Get_Old_Name().endswith("_init")
+        else:
+            return False
 
     def Is_Destructor(self):
-        if isinstance(self.Widget, Widget.Widget_Class):
+        if isinstance(self.Widget, Widget.Widget_Class) or isinstance(self.Widget, Group.Group_Class):
             return self.Get_Old_Name().endswith("_del")
         elif isinstance(self.Widget, Style.Style_Class):
             return self.Get_Old_Name().endswith("_reset")
@@ -80,10 +86,16 @@ class Method_Class:
 
         if isinstance(self.Widget, Widget.Widget_Class):
             return "lv_obj_t*" in First_Argument_Type.Get_String().replace(" ", "").replace("const", "") and not(self.Is_Constructor())
+        elif isinstance(self.Widget, Group.Group_Class):
+            return "lv_group_t*" in First_Argument_Type.Get_String().replace(" ", "").replace("const", "")
+        elif isinstance(self.Widget, Event.Event_Class):
+            return "lv_event_t*" in First_Argument_Type.Get_String().replace(" ", "").replace("const", "")
         elif isinstance(self.Widget, Color.Color_Class):
             return "lv_color_t" in First_Argument_Type.Get_String().replace(" ", "").replace("const", "")
         elif isinstance(self.Widget, Style.Style_Class):
             return "lv_style_t*" in First_Argument_Type.Get_String().replace(" ", "").replace("const", "")
+        elif isinstance(self.Widget, Area.Area_Class):
+            return "lv_area_t*" in First_Argument_Type.Get_String().replace(" ", "").replace("const", "")
 
     def Get_Arguments(self):
         A = []
@@ -99,7 +111,7 @@ class Method_Class:
         D = ""
 
         if not(For_Definition):
-            if self.Is_Constructor() and isinstance(self.Widget, Widget.Widget_Class):
+            if self.Is_Constructor() and (isinstance(self.Widget, Widget.Widget_Class) or isinstance(self.Widget, Group.Group_Class)):
                 D += "explicit "
             elif self.Is_Destructor():
                 D += "virtual "
@@ -116,7 +128,6 @@ class Method_Class:
 
         #if self.Is_Constructor():
         #    D += "Object_Class& Parent, "
-
 
         for i, Argument in enumerate(self.Get_Arguments()):
             if i == 0 and self.Is_Constructor():    # ! : Fix for invalid constructor issue
@@ -138,12 +149,11 @@ class Method_Class:
             D = D.replace("\n{\n", "")
             D += " : Object_Class(NULL) \n{\n"
             D += "\tLVGL_Pointer = " + self.Get_Old_Name() + "("
-            
-          
+        elif self.Is_Constructor() and isinstance(self.Widget, Group.Group_Class):
+            D += "\tLVGL_Group = " + self.Get_Old_Name() + "("
         elif self.Is_Destructor():
             D += "\t" + self.Get_Old_Name() + "("
         else:
-
             if self.Get_Return_Type().Is_Void():
                 D += "\t" + self.Get_Old_Name() + "("
             else:
@@ -153,10 +163,16 @@ class Method_Class:
         if self.Has_This_Argument():
             if isinstance(self.Widget, Widget.Widget_Class):
                 D += "LVGL_Pointer, "
+            elif isinstance(self.Widget, Event.Event_Class):
+                D += "LVGL_Event, "
+            elif isinstance(self.Widget, Group.Group_Class):
+                D += "LVGL_Group, "
             elif isinstance(self.Widget, Color.Color_Class):
                 D += "LVGL_Color, "
             elif isinstance(self.Widget, Style.Style_Class):
                 D += "&LVGL_Style, "
+            elif isinstance(self.Widget, Area.Area_Class):
+                D += "&LVGL_Area, "
 
         for Argument in self.Get_Arguments():
             D += Argument.Get_New_Name() + ", "

@@ -10,6 +10,9 @@ import Type
 import Widget
 import Style
 import Color
+import Event
+import Group
+import Area
 
 #import Widgets
 import Paths
@@ -17,7 +20,10 @@ import Basics
 
 # - PyGCCXML configuration
 
-os.system("cls")
+if os.name == "nt":
+    os.system("cls")
+else:
+    os.system("clear")
 
 Generator_Path, Generator_Name = utils.find_xml_generator()
 
@@ -43,6 +49,11 @@ Style.Style_Class(Global_Namespace).Generate_Bindings()
 
 Color.Color_Class(Global_Namespace).Generate_Bindings()
 
+Event.Event_Class(Global_Namespace).Generate_Bindings()
+
+Group.Group_Class(Global_Namespace).Generate_Bindings()
+
+Area.Area_Class(Global_Namespace).Generate_Bindings()
 
 #for Function in Global_Namespace.free_functions():
 #    print(Function)
