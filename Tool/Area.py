@@ -2,7 +2,7 @@ import Base
 
 class Area_Class(Base.Base_Class):
     def __init__(self, Namespace):
-        Base.Base_Class.__init__(self, "area", "Area", Namespace)
+        Base.Base_Class.__init__(self, "area", "Area", Namespace, "lv_area_t", "LVGL_Area")
 
     def __del__(self):
         Base.Base_Class.__del__(self)

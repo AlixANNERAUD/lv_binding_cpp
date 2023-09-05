@@ -13,6 +13,8 @@ import Color
 import Event
 import Group
 import Area
+import Timer
+import Display
 
 #import Widgets
 import Paths
@@ -54,6 +56,10 @@ Event.Event_Class(Global_Namespace).Generate_Bindings()
 Group.Group_Class(Global_Namespace).Generate_Bindings()
 
 Area.Area_Class(Global_Namespace).Generate_Bindings()
+
+Timer.Timer_Class(Global_Namespace).Generate_Bindings()
+
+Display.Display_Class(Global_Namespace).Generate_Bindings()
 
 #for Function in Global_Namespace.free_functions():
 #    print(Function)

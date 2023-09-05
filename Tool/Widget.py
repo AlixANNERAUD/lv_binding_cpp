@@ -94,7 +94,6 @@ class Widget_Class(Base.Base_Class):
                 Best_Match_Score = Current_Score
 
         if Best_Match == None or self.Get_Old_Type_Name() != Best_Match or Method.name.startswith("lv_img_decoder"):        
-            print(f"Method {Method.name} is not in the right class {self.Get_Old_Type_Name()} != {Best_Match}")
             return True
 
         return False
@@ -118,7 +117,7 @@ class Widget_Class(Base.Base_Class):
             Dependencies = ["Object"]
     
 
-        Base.Base_Class.__init__(self, Old_Name, self.Name, Namespace, Dependencies, Heritage)
+        Base.Base_Class.__init__(self, Old_Name, self.Name, Namespace, "lv_obj_t*", "LVGL_Pointer", Dependencies=Dependencies, Heritage=Heritage)
 
     def __del__(self):
         Base.Base_Class.__del__(self)
@@ -171,3 +170,12 @@ class Widget_Class(Base.Base_Class):
                 #for A in Method.Get_Arguments():
                 #    print(f"{A.Get_Name()} : {A.Get_Type().Get_Converted_String()}")
         
+    def Is_Constructor(self, Method_Name):
+        return Method_Name.endswith("_create")
+
+    def Is_Destructor(self, Method_Name):
+        return Method_Name.endswith("_del")
+            
+    def Has_Method_This_Argument(self, Method):
+        return Base.Base_Class.Has_Method_This_Argument(self, Method) and not(Method.Is_Constructor())
+

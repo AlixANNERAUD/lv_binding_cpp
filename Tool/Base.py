@@ -4,11 +4,15 @@ import Paths
 import Method
 import Basics
 
+import Type
+
 class Base_Class:
     
-    def __init__(self, Old_Name, New_Name, Namespace, Dependencies = None, Heritage = None):
+    def __init__(self, Old_Name : str, New_Name : str, Namespace, This_Attribute_Type : str, This_Attribute_Name : str, Dependencies = None, Heritage = None, Custom_Method = None):
         self.Old_Name = Old_Name 
         self.Name = New_Name
+        self.This_Attribute_Name = This_Attribute_Name
+        self.This_Attribute_Type = This_Attribute_Type
 
         Header_File_Path = os.path.join(Paths.Get_Bindings_Header_Path(), self.Name + ".hpp")
         if os.path.exists(Header_File_Path):
@@ -36,6 +40,12 @@ class Base_Class:
     def __del__(self):
         self.Header_File.close()
         self.Source_File.close()
+
+    def Get_This_Attribute_Name(self):
+        return self.This_Attribute_Name
+
+    def Get_This_Attribute_Type(self):
+        return self.This_Attribute_Type
 
     def Is_Method_Excluded(self, Method):
         return False
@@ -96,4 +106,23 @@ class Base_Class:
 
         self.Write_Source_Footer()
 
+    def Is_Constructor(self, Method_Name : str):
+        return False
+
+    def Is_Destructor(self, Method_Name : str):
+        return False
             
+    def Get_This_As_Argument(self):
+        if self.Get_This_Attribute_Type().endswith("*"):
+            return self.Get_This_Attribute_Name()
+        return "&" + self.Get_This_Attribute_Name()
+
+    def Has_Method_This_Argument(self, Method):
+        if len(Method.Declaration.arguments) == 0:
+            return False
+
+        First_Argument_Type = Type.Type_Class(Method.Declaration.arguments[0].decl_type)
+
+        return self.Get_This_Attribute_Type() in First_Argument_Type.Get_String().replace(" ", "").replace("const", "")
+
+        

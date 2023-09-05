@@ -20,7 +20,7 @@ class Style_Class(Base.Base_Class):
     def __init__(self, Namespace):
         Dependencies = ["Color"]
 
-        Base.Base_Class.__init__(self, "style", "Style", Namespace, Dependencies=Dependencies)
+        Base.Base_Class.__init__(self, "style", "Style", Namespace, "lv_style_t", "LVGL_Style", Dependencies=Dependencies)
 
     def __del__(self):
         Base.Base_Class.__del__(self)
@@ -44,4 +44,8 @@ class Style_Class(Base.Base_Class):
         self.Header_File.write("\t} " + self.Get_Type_Name() + ";\n")
         self.Header_File.write("}\n")
 
+    def Is_Constructor(self, Method_Name):
+        return Method_Name.endswith("_init")
 
+    def Is_Destructor(self, Method_Name):
+        return Method_Name.endswith("_reset")

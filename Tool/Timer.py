@@ -1,8 +1,8 @@
 import Base
 
-class Group_Class(Base.Base_Class):
+class Timer_Class(Base.Base_Class):
     def __init__(self, Namespace):
-        Base.Base_Class.__init__(self, "group", "Group", Namespace, "lv_group_t*", "LVGL_Group", Dependencies=["Object"])
+        Base.Base_Class.__init__(self, "timer", "Timer", Namespace, "lv_timer_t*", "LVGL_Timer")
 
     def __del__(self):
         Base.Base_Class.__del__(self)
@@ -14,17 +14,17 @@ class Group_Class(Base.Base_Class):
 
         # - - Operators
 
-        self.Header_File.write("\t\tinline operator lv_group_t*() { return this->LVGL_Group; };\n")
-        self.Header_File.write("\t\tinline Group_Class(lv_group_t* Group) : LVGL_Group(Group) { };\n")
+        self.Header_File.write("\t\tinline operator lv_timer_t*() { return this->LVGL_Timer; };\n")
+        self.Header_File.write("\t\tinline Timer_Class(lv_timer_t* Timer) : LVGL_Timer(Timer) { };\n")
         self.Header_File.write("\n")
 
         # - Attributes
 
         self.Header_File.write("\tprotected:\n")
         
-        self.Header_File.write("\t\tlv_group_t* LVGL_Group;\n")
+        self.Header_File.write("\t\tlv_timer_t* LVGL_Timer;\n")
 
-        self.Header_File.write("\t} Group_Type;\n")
+        self.Header_File.write("\t} Timer_Type;\n")
         self.Header_File.write("}\n")
 
     def Is_Constructor(self, Method_Name):
@@ -32,4 +32,5 @@ class Group_Class(Base.Base_Class):
 
     def Is_Destructor(self, Method_Name):
         return Method_Name.endswith("_del")
+
 

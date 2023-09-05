@@ -13,7 +13,7 @@ import Base
 
 class Color_Class(Base.Base_Class):
     def __init__(self, Namespace):
-        Base.Base_Class.__init__(self, "color", "Color", Namespace)
+        Base.Base_Class.__init__(self, "color", "Color", Namespace, "lv_color_t", "LVGL_Color")
             
     def __del__(self):
         Base.Base_Class.__del__(self)
@@ -49,3 +49,6 @@ class Color_Class(Base.Base_Class):
 
         self.Header_File.write("\t} Color_Type;\n")
         self.Header_File.write("}\n")
+
+    def Get_This_As_Argument(self):
+        return self.Get_This_Attribute_Name()
