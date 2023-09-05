@@ -6,9 +6,13 @@ import Basics
 
 import Type
 
+
 class Base_Class:
-    
+
     def __init__(self, Old_Name : str, New_Name : str, Namespace, This_Attribute_Type : str, This_Attribute_Name : str, Dependencies = None, Heritage = None, Custom_Method = None):
+        self.Header_File_Scope = 0
+        self.Source_File_Scope = 0
+        
         self.Old_Name = Old_Name 
         self.Name = New_Name
         self.This_Attribute_Name = This_Attribute_Name
@@ -62,31 +66,58 @@ class Base_Class:
     def Get_Type_Name(self):
         return self.Name + "_Type"
 
+    def Add_Line(self, File : str, Line : str):
+        if File[0] == 'H' or File[0] == 'h':
+            for i in range(self.Header_File_Scope):
+                Line = "\t" + Line
+            self.Header_File.write(Line + "\n")
+        elif File[0] == 'S' or File[0] == 's':
+            for i in range(self.Source_File_Scope):
+                Line = "\t" + Line
+            self.Source_File.write(Line + "\n")
+
+    def Increase_Scope(self, File : str):
+        if File[0] == 'H' or File[0] == 'h':
+            self.Add_Line('H', "{")
+            self.Header_File_Scope += 1
+        elif File[0] == 'S' or File[0] == 's':
+            self.Add_Line('S', "{")
+            self.Source_File_Scope += 1
+
+    def Decrease_Scope(self, File : str):
+        if File[0] == 'H' or File[0] == 'h':
+            self.Add_Line('H', "}")
+            self.Header_File_Scope -= 1
+        elif File[0] == 'S' or File[0] == 's':
+            self.Add_Line('S', "}")
+            self.Source_File_Scope -= 1    
+
     def Write_Header_Header(self):
         self.Header_File.write("// Auto generated file\n\n")
 
-        self.Header_File.write("#pragma once\n")
-        self.Header_File.write("#include \"lvgl.h\"\n\n")
+        self.Add_Line('H', "#pragma once")
+        self.Add_Line('H', "#include \"lvgl.h\"")
 
-        if self.Dependencies:
-            for Dependency in self.Dependencies:
-                self.Header_File.write("#include \"" + Dependency + ".hpp\"\n")
+        for Dependency in self.Dependencies:
+            self.Add_Line('H', "#include \"" + Dependency + ".hpp\"")
 
-        self.Header_File.write(f"namespace {Basics.Library_Namespace}\n")
-        self.Header_File.write("{\n")
-        self.Header_File.write("\ttypedef class " + self.Get_Class_Name())
-
+        self.Add_Line('H', f"namespace {Basics.Library_Namespace}")
+        
+        self.Increase_Scope('H')
+        self.Add_Line('H', f"typedef class {self.Get_Class_Name()}")
         if self.Heritage:
-            self.Header_File.write(" : public " + self.Heritage)
-
-        self.Header_File.write("\n\t{\n")
-        self.Header_File.write("\tpublic:\n")
+            self.Add_Line('H', f" : public {self.Heritage}")
+        self.Add_Line('H', "{")
+        
+        self.Increase_Scope('H')
+        self.Add_Line('H', "public:")
 
     def Write_Source_Header(self):
-        self.Source_File.write("// Auto generated file\n\n")
+        self.Add_Line('S', "// Auto generated file\n")
 
-        self.Source_File.write("#include \"" + self.Name + ".hpp\"\n\n")
-        self.Source_File.write(f"using namespace {Basics.Library_Namespace};\n\n")
+        self.Add_Line('S', "#include \"" + self.Get_Name() + ".hpp\"")
+
+        self.Add_Line('S', f"using namespace {Basics.Library_Namespace};\n")
 
     def Write_Source_Footer(self):
         pass

@@ -157,18 +157,8 @@ class Widget_Class(Base.Base_Class):
         Base.Base_Class.Write_Source_Header(self)
 
         # - - Attributes
-
+        
         self.Source_File.write(f"const lv_obj_class_t& {self.Get_Class_Name()}::Class = lv_{self.Get_Old_Type_Name()}_class;\n\n")
-
-    def Generate_All_Bindings(Namespace):
-        for Widget_Old_Name, _ in Widget_Class.List:
-            W = Widget_Class(Widget_Old_Name, Namespace)
-            W.Generate_Bindings()
-            #for Method in W.Methods:
-                #print(f"{Method.Get_Old_Name()} -> {Method.Get_New_Name()}() : {Method.Get_Return_Type().Get_Converted_String()}")
-                #print(f"{Method.Get_Prototype()}")
-                #for A in Method.Get_Arguments():
-                #    print(f"{A.Get_Name()} : {A.Get_Type().Get_Converted_String()}")
         
     def Is_Constructor(self, Method_Name):
         return Method_Name.endswith("_create")
@@ -179,3 +169,7 @@ class Widget_Class(Base.Base_Class):
     def Has_Method_This_Argument(self, Method):
         return Base.Base_Class.Has_Method_This_Argument(self, Method) and not(Method.Is_Constructor())
 
+    def Generate_All_Bindings(Namespace):
+        for Widget_Old_Name, _ in Widget_Class.List:
+            W = Widget_Class(Widget_Old_Name, Namespace)
+            W.Generate_Bindings()

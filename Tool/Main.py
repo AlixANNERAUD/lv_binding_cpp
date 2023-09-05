@@ -106,4 +106,6 @@ Main_Header_File.write("#include \"lvgl.h\"\n\n")
 for _, Name in Widget.Widget_Class.List:
     Main_Header_File.write("#include \"" + Name + ".hpp\"\n")
 
+Main_Header_File.write("#include \"Display.hpp\"")
+
 Main_Header_File.close()
