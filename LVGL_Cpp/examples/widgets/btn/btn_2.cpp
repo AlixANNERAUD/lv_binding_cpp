@@ -1,8 +1,10 @@
-#include "LVGL_Cpp.hpp"
+#include "../Examples.hpp"
 
 #if LV_USE_BTN && LV_BUILD_EXAMPLES
 
-void lv_example_btn_2()
+using namespace LVGL::Examples;
+
+void btn_2()
 {
     static LVGL::Style_Type Style;
     

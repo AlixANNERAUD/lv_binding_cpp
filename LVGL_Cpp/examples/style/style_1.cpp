@@ -1,11 +1,12 @@
-#include "LVGL_Cpp.hpp"
+#include "../Examples.hpp"
+
 #if LV_BUID_EXAMPLES && LV_USE_IMG
 
-using namespace LVGL::Example;
+using namespace LVGL::Examples;
 
-void lv_example_style_1()
+void style_1()
 {
-    static LVGL::Style_Type Style;
+    LVGL::Style_Type Style;
     Style.Set_Radius(5);
 
     /* Make a gradient */
