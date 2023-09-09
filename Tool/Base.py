@@ -200,7 +200,9 @@ class Base_Class:
         self.Write_Header_Header()
 
         for M in self.Methods:
-            self.Header_File.write("\t\t" + M.Get_Prototype() + ";\n")
+            self.Write_Line('H')
+            self.Write_Line('H', M.Get_Documentation())
+            self.Write_Line('H', M.Get_Prototype() + ";")
 
         self.Write_Header_Footer()
 

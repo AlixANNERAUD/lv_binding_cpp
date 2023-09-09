@@ -16,6 +16,8 @@ import Area
 import Timer
 import Display
 
+import Method
+
 #import Widgets
 import Paths
 import Basics
@@ -42,6 +44,8 @@ Decl = Parser.parse([Paths.Get_LVGL_Header_Path()], XML_Generator_Configuration)
 Paths.Create_Bindings_Folder(True)
 
 # - Explore 
+
+Method.Method_Class.Initialize_Header_Files_List()
 
 Global_Namespace = Declarations.get_global_namespace(Decl)
 

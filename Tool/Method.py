@@ -12,13 +12,43 @@ import Group
 import Area
 import Timer
 
+import Paths
+
 import Type
 import Variable
 
 class Method_Class:
+
+    Header_Files_List = []
+
+    Documentations_List = []
+
+    def Find_In_Files(Regex):
+        Results = []
+
+        for File in Method_Class.Header_Files_List:
+            with open(File, "r", encoding="utf-8") as File:
+                File_Content = File.read()
+                for match in re.finditer(Regex, File_Content):
+                    Results.append((match.group(2), match.group(1)))
+
+        return Results
+
+    def Initialize_Header_Files_List():
+        Method_Class.Header_Files_List = Paths.Find_File_By_Extension(Paths.Get_LVGL_Sources_Path(), ".h")
+
+        Method_Class.Documentations_List = Method_Class.Find_In_Files(r"(\/\*\*\n[\w\s\*\n@.,`\"]+\*\/)\n[\w\*\s]+\s(lv_[\w\s\*\n@.]+)\([\w\s\*\n@.,]+\)\;")
+
     def __init__(self, Widget, Declaration):
         self.Declaration = Declaration
         self.Widget = Widget
+
+        self.Documentation = ""
+
+        for Function_Name, Documentation in Method_Class.Documentations_List:
+            if Function_Name == self.Get_Old_Name():
+                self.Documentation = Documentation
+                break
 
     def Get_Old_Name(self):
         return self.Declaration.name
@@ -56,6 +86,8 @@ class Method_Class:
         
         return A
         
+    def Get_Documentation(self):
+        return self.Documentation
 
     def Get_Prototype(self, For_Definition = False):
         D = ""
