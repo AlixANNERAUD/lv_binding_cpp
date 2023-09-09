@@ -12,38 +12,24 @@ import Base
 
 class Style_Class(Base.Base_Class):
 
-    def Is_Method_Excluded(self, Method):
-        if Method.name.startswith("lv_style_transition_dsc_init"):
-            return True
-        return False
 
     def __init__(self, Namespace):
         Dependencies = ["Color"]
 
-        Base.Base_Class.__init__(self, "style", "Style", Namespace, "lv_style_t", "LVGL_Style", Dependencies=Dependencies)
+        Custom_Methods = [
+            ("operator lv_style_t*()", "return &this->LVGL_Style;"),
+        ]
+
+        Base.Base_Class.__init__(self, "style", "Style", Namespace, "lv_style_t", "LVGL_Style", Dependencies=Dependencies, Custom_Methods=Custom_Methods)
 
     def __del__(self):
         Base.Base_Class.__del__(self)
+
+    def Is_Method_Excluded(self, Method):
+        if Method.name.startswith("lv_style_transition_dsc_init"):
+            return True
+        return False
     
-    def Write_Header_Footer(self):
-        self.Header_File.write("\n")
-
-        # - Methods
-
-        # - - Operators
-
-        self.Header_File.write("\t\tinline operator lv_style_t*() { return &this->LVGL_Style; };\n")
-        self.Header_File.write("\n")
-
-        # - Attributes
-
-        self.Header_File.write("\tprotected:\n\n")
-
-        self.Header_File.write("\t\tlv_style_t LVGL_Style;\n")
-
-        self.Header_File.write("\t} " + self.Get_Type_Name() + ";\n")
-        self.Header_File.write("}\n")
-
     def Is_Constructor(self, Method_Name):
         return Method_Name.endswith("_init")
 

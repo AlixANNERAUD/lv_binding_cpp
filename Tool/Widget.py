@@ -71,6 +71,46 @@ class Widget_Class(Base.Base_Class):
                 ["tileview_tile","Tileview_Tile"],
                 ["win", "Window"]]
 
+
+    def __init__(self, Old_Name, Namespace):
+
+        self.Old_Name = Old_Name
+        self.Name = ""
+
+
+        for O, N in Widget_Class.List:
+            if O == Old_Name:
+                self.Name = N
+
+        Dependencies = None
+        Heritage = None
+
+        if self.Name == "Object":
+            Dependencies = ["Style", "Area"]
+        else:
+            Heritage = "Object_Class"
+            Dependencies = ["Object"]
+    
+
+        Custom_Methods = []
+
+        if self.Get_Name() == "Object":
+            Custom_Methods.append(("static Object_Class Get_Current_Screen()", "return lv_scr_act();"))
+            Custom_Methods.append(("lv_obj_t* Get_LVGL_Pointer() const", "return LVGL_Pointer;"))
+            Custom_Methods.append(("void Clear_Pointer()", "LVGL_Pointer = NULL;"))
+
+        # - Constructors
+
+        Custom_Methods.append((self.Get_Class_Name() + "() = delete", ""))
+        Custom_Methods.append((self.Get_Class_Name() + "(" + self.Get_Class_Name() + "&& Object_To_Move) : Object_Class((lv_obj_t*)Object_To_Move)", "Object_To_Move.Clear_Pointer();"))
+
+        Custom_Attributes = ["static const lv_obj_class_t& Class;"]
+
+        Base.Base_Class.__init__(self, Old_Name, self.Name, Namespace, "lv_obj_t*", "LVGL_Pointer", Dependencies=Dependencies, Heritage=Heritage, Custom_Methods=Custom_Methods)
+
+    def __del__(self):
+        Base.Base_Class.__del__(self)
+
     def Is_Method_Excluded(self, Method):
         
         Best_Match = None
@@ -97,61 +137,6 @@ class Widget_Class(Base.Base_Class):
             return True
 
         return False
-
-    def __init__(self, Old_Name, Namespace):
-
-        self.Old_Name = Old_Name
-        self.Name = ""
-
-        for O, N in Widget_Class.List:
-            if O == Old_Name:
-                self.Name = N
-
-        Dependencies = None
-        Heritage = None
-
-        if self.Name == "Object":
-            Dependencies = ["Style", "Area"]
-        else:
-            Heritage = "Object_Class"
-            Dependencies = ["Object"]
-    
-
-        Base.Base_Class.__init__(self, Old_Name, self.Name, Namespace, "lv_obj_t*", "LVGL_Pointer", Dependencies=Dependencies, Heritage=Heritage)
-
-    def __del__(self):
-        Base.Base_Class.__del__(self)
-
-    def Write_Header_Footer(self):
-        self.Header_File.write("\n")
-
-        # - Methods
-
-        # - - Constructors
-
-        if self.Get_Name() == "Object":
-            self.Header_File.write("\t\tinline static Object_Class Get_Current_Screen() { return lv_scr_act(); };\n")
-            self.Header_File.write("\t\tinline lv_obj_t* Get_LVGL_Pointer() const { return LVGL_Pointer; };\n")
-            self.Header_File.write("\t\tinline void Clear_Pointer() { LVGL_Pointer = NULL; };\n")
-            self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "(lv_obj_t* LVGL_Pointer) : LVGL_Pointer(LVGL_Pointer) { };\n")
-        else:
-            self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "(lv_obj_t* LVGL_Pointer) : Object_Class(LVGL_Pointer) { };\n")
-
-        self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "() = delete;\n")
-        self.Header_File.write("\t\tinline " + self.Get_Class_Name() + "(" + self.Get_Class_Name() + "&& Object_To_Move) : Object_Class((lv_obj_t*)Object_To_Move) { Object_To_Move.Clear_Pointer(); }\n")
-        # - - Operators
-        self.Header_File.write("\t\tinline operator lv_obj_t*() const { return this->Get_LVGL_Pointer(); };\n\n")
-
-        # - - Attributes
-
-        self.Header_File.write("\t\tstatic const lv_obj_class_t& Class;\n")
-
-        if self.Get_Name() == "Object":
-            self.Header_File.write("\tprotected:\n")
-            self.Header_File.write("\t\tlv_obj_t* LVGL_Pointer;\n")
-
-        self.Header_File.write("    } " + self.Get_Type_Name() + ";\n")
-        self.Header_File.write("}\n")
 
     def Write_Source_Header(self):
         Base.Base_Class.Write_Source_Header(self)

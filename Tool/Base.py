@@ -9,7 +9,7 @@ import Type
 
 class Base_Class:
 
-    def __init__(self, Old_Name : str, New_Name : str, Namespace, This_Attribute_Type : str, This_Attribute_Name : str, Dependencies = None, Heritage = None, Custom_Method = None):
+    def __init__(self, Old_Name : str, New_Name : str, Namespace, This_Attribute_Type : str, This_Attribute_Name : str, Dependencies = None, Heritage = None, Custom_Methods = None, Custom_Attributes = None):
         self.Header_File_Scope = 0
         self.Source_File_Scope = 0
         
@@ -17,6 +17,9 @@ class Base_Class:
         self.Name = New_Name
         self.This_Attribute_Name = This_Attribute_Name
         self.This_Attribute_Type = This_Attribute_Type
+
+        self.Custom_Methods = Custom_Methods
+        self.Custom_Attributes = Custom_Attributes
 
         Header_File_Path = os.path.join(Paths.Get_Bindings_Header_Path(), self.Name + ".hpp")
         if os.path.exists(Header_File_Path):
@@ -45,10 +48,10 @@ class Base_Class:
         self.Header_File.close()
         self.Source_File.close()
 
-    def Get_This_Attribute_Name(self):
+    def Get_This_Name(self):
         return self.This_Attribute_Name
 
-    def Get_This_Attribute_Type(self):
+    def Get_This_Type(self):
         return self.This_Attribute_Type
 
     def Is_Method_Excluded(self, Method):
@@ -66,58 +69,113 @@ class Base_Class:
     def Get_Type_Name(self):
         return self.Name + "_Type"
 
-    def Add_Line(self, File : str, Line : str):
+    def Write_Line(self, File : str, Line : str = ""):
         if File[0] == 'H' or File[0] == 'h':
             for i in range(self.Header_File_Scope):
                 Line = "\t" + Line
-            self.Header_File.write(Line + "\n")
         elif File[0] == 'S' or File[0] == 's':
             for i in range(self.Source_File_Scope):
                 Line = "\t" + Line
-            self.Source_File.write(Line + "\n")
+        Line += "\n"
+        self.Write(File, Line)
 
-    def Increase_Scope(self, File : str):
+    def Write(self, File : str, String : str):
         if File[0] == 'H' or File[0] == 'h':
-            self.Add_Line('H', "{")
+            self.Header_File.write(String)
+        elif File[0] == 'S' or File[0] == 's':
+            self.Source_File.write(String)
+
+    def Increase_Scope(self, File : str, New_Line : bool = True):
+        if New_Line:
+            self.Write_Line(File, "{")
+        else:
+            self.Write(File, "{")
+
+        if File[0] == 'H' or File[0] == 'h':
             self.Header_File_Scope += 1
         elif File[0] == 'S' or File[0] == 's':
-            self.Add_Line('S', "{")
             self.Source_File_Scope += 1
 
-    def Decrease_Scope(self, File : str):
+    def Decrease_Scope(self, File : str, New_Line : bool = True):
         if File[0] == 'H' or File[0] == 'h':
-            self.Add_Line('H', "}")
             self.Header_File_Scope -= 1
         elif File[0] == 'S' or File[0] == 's':
-            self.Add_Line('S', "}")
             self.Source_File_Scope -= 1    
+        if New_Line:
+            self.Write_Line(File, "}")
+        else:
+            self.Write(File, "}")
 
     def Write_Header_Header(self):
-        self.Header_File.write("// Auto generated file\n\n")
+        self.Write_Line('H', "// Auto generated file\n")
 
-        self.Add_Line('H', "#pragma once")
-        self.Add_Line('H', "#include \"lvgl.h\"")
+        self.Write_Line('H', "#pragma once")
+        self.Write_Line('H', "#include \"lvgl.h\"")
 
-        for Dependency in self.Dependencies:
-            self.Add_Line('H', "#include \"" + Dependency + ".hpp\"")
+        if self.Dependencies:
+            for Dependency in self.Dependencies:
+                self.Write_Line('H', "#include \"" + Dependency + ".hpp\"")
 
-        self.Add_Line('H', f"namespace {Basics.Library_Namespace}")
-        
+        self.Write_Line('H')
+
+        self.Write_Line('H', f"namespace {Basics.Library_Namespace}")
         self.Increase_Scope('H')
-        self.Add_Line('H', f"typedef class {self.Get_Class_Name()}")
+
         if self.Heritage:
-            self.Add_Line('H', f" : public {self.Heritage}")
-        self.Add_Line('H', "{")
-        
+            self.Write_Line('H', f"typedef class {self.Get_Class_Name()} : public {self.Heritage}")
+        else:
+            self.Write_Line('H', f"typedef class {self.Get_Class_Name()}")
+
         self.Increase_Scope('H')
-        self.Add_Line('H', "public:")
+        self.Write_Line('H', "public:")
+
+    def Write_Header_Footer(self):
+
+        # - Other methods
+
+        # - - Operators
+
+        self.Write_Line('H', "inline operator " + self.Get_This_Type() + "() { return this->" + self.Get_This_Name() + "; };")
+        
+        # - - - Constructor
+
+        self.Write_Line('H', "inline " + self.Get_Class_Name() + "(" + self.Get_This_Type() + " " + self.Get_This_Name() + ") : " + self.Get_This_Name() + "(" + self.Get_This_Name() + ") { };")
+
+        # - - -  Custom
+
+        if self.Custom_Methods:
+            for Prototype, Definition in self.Custom_Methods:
+                if Prototype.endswith("= delete"):
+                    self.Write_Line('H', "inline " + Prototype + ";")
+                else:    
+                    self.Write_Line('H', "inline " + Prototype + " { " + Definition + " };")
+
+
+        # - Attributes
+
+        if self.Custom_Attributes:
+            for Custom_Attribute in self.Custom_Attributes:
+                self.Write_Line('H', Custom_Attribute)
+
+        if not self.Heritage:
+            self.Write_Line('H', "protected:")
+
+            self.Write_Line('H', self.Get_This_Type() + " " + self.Get_This_Name() + ";")
+
+        self.Decrease_Scope('H')
+
+        self.Write_Line('H', self.Get_Type_Name() + ";")
+        
+        self.Decrease_Scope('H')
+
+
 
     def Write_Source_Header(self):
-        self.Add_Line('S', "// Auto generated file\n")
+        self.Write_Line('S', "// Auto generated file\n")
 
-        self.Add_Line('S', "#include \"" + self.Get_Name() + ".hpp\"")
+        self.Write_Line('S', "#include \"" + self.Get_Name() + ".hpp\"")
 
-        self.Add_Line('S', f"using namespace {Basics.Library_Namespace};\n")
+        self.Write_Line('S', f"using namespace {Basics.Library_Namespace};\n")
 
     def Write_Source_Footer(self):
         pass
@@ -144,9 +202,9 @@ class Base_Class:
         return False
             
     def Get_This_As_Argument(self):
-        if self.Get_This_Attribute_Type().endswith("*"):
-            return self.Get_This_Attribute_Name()
-        return "&" + self.Get_This_Attribute_Name()
+        if self.Get_This_Type().endswith("*"):
+            return self.Get_This_Name()
+        return "&" + self.Get_This_Name()
 
     def Has_Method_This_Argument(self, Method):
         if len(Method.Declaration.arguments) == 0:
@@ -154,6 +212,4 @@ class Base_Class:
 
         First_Argument_Type = Type.Type_Class(Method.Declaration.arguments[0].decl_type)
 
-        return self.Get_This_Attribute_Type() in First_Argument_Type.Get_String().replace(" ", "").replace("const", "")
-
-        
+        return self.Get_This_Type() in First_Argument_Type.Get_String().replace(" ", "").replace("const", "")

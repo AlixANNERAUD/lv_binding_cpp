@@ -93,11 +93,11 @@ class Method_Class:
         D = self.Get_Prototype(True) + "\n{\n"
 
         if self.Is_Constructor():
-            if self.Widget.Get_This_Attribute_Type().endswith("*"):
+            if self.Widget.Get_This_Type().endswith("*"):
                 if isinstance(self.Widget, Widget.Widget_Class):
                     D = D.replace("\n{\n", "")
                     D += " : Object_Class(NULL) \n{\n"
-                D += "\t" + self.Widget.Get_This_Attribute_Name() + " = " + self.Get_Old_Name() + "("
+                D += "\t" + self.Widget.Get_This_Name() + " = " + self.Get_Old_Name() + "("
             else:
                 D += "\t" + self.Get_Old_Name() + "("
           
