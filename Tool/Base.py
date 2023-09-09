@@ -136,10 +136,14 @@ class Base_Class:
         # - - Operators
 
         self.Write_Line('H', "inline operator " + self.Get_This_Type() + "() { return this->" + self.Get_This_Name() + "; };")
-        
+        self.Write_Line('H', "inline operator const " + self.Get_This_Type() + "() const { return this->" + self.Get_This_Name() + "; };")
+
         # - - - Constructor
 
-        self.Write_Line('H', "inline " + self.Get_Class_Name() + "(" + self.Get_This_Type() + " " + self.Get_This_Name() + ") : " + self.Get_This_Name() + "(" + self.Get_This_Name() + ") { };")
+        if self.Heritage:
+            self.Write_Line('H', "inline " + self.Get_Class_Name() + "(" + self.Get_This_Type() + " " + self.Get_This_Name() + ") : " + self.Heritage + "(" + self.Get_This_Name() + ") { };")
+        else:
+            self.Write_Line('H', "inline " + self.Get_Class_Name() + "(" + self.Get_This_Type() + " " + self.Get_This_Name() + ") : " + self.Get_This_Name() + "(" + self.Get_This_Name() + ") { };")
 
         # - - -  Custom
 

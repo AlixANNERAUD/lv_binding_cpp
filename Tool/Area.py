@@ -11,6 +11,3 @@ class Area_Class(Base.Base_Class):
         ]
 
         Base.Base_Class.__init__(self, "area", "Area", Namespace, "lv_area_t", "LVGL_Area", Custom_Methods=Custom_Methods)
-
-    def __del__(self):
-        Base.Base_Class.__del__(self)

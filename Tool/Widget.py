@@ -106,10 +106,7 @@ class Widget_Class(Base.Base_Class):
 
         Custom_Attributes = ["static const lv_obj_class_t& Class;"]
 
-        Base.Base_Class.__init__(self, Old_Name, self.Name, Namespace, "lv_obj_t*", "LVGL_Pointer", Dependencies=Dependencies, Heritage=Heritage, Custom_Methods=Custom_Methods)
-
-    def __del__(self):
-        Base.Base_Class.__del__(self)
+        Base.Base_Class.__init__(self, Old_Name, self.Name, Namespace, "lv_obj_t*", "LVGL_Pointer", Dependencies=Dependencies, Heritage=Heritage, Custom_Methods=Custom_Methods, Custom_Attributes=Custom_Attributes)
 
     def Is_Method_Excluded(self, Method):
         

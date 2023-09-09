@@ -22,9 +22,6 @@ class Style_Class(Base.Base_Class):
 
         Base.Base_Class.__init__(self, "style", "Style", Namespace, "lv_style_t", "LVGL_Style", Dependencies=Dependencies, Custom_Methods=Custom_Methods)
 
-    def __del__(self):
-        Base.Base_Class.__del__(self)
-
     def Is_Method_Excluded(self, Method):
         if Method.name.startswith("lv_style_transition_dsc_init"):
             return True
