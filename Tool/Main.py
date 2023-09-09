@@ -65,42 +65,6 @@ Timer.Timer_Class(Global_Namespace).Generate_Bindings()
 
 Display.Display_Class(Global_Namespace).Generate_Bindings()
 
-#for Function in Global_Namespace.free_functions():
-#    print(Function)
-
-#    if (Get_Name(Function).startswith("lv_")):
-#        print("---------------")
-
-#        print(str(Function))
-#        T = Type.Type_Class(Function.return_type)
-#        print(T.Get_Informations(True))
-        
-        
-
-        #T = Type.Type_Class(Function.return_type)
-        #print(f"{type(T.Declaration)} {Get_Name(Function)} : {T.Get_String()} | P : {T.Is_Pointer()}")
-        #if T.Is_Compound():
-        #    print(f"P : {T.Get_Base().Is_Pointer()} | C : {T.Is_Constant()}")
-
-
-
-# Widgets.Generate_All_Bindings(Declarations.get_global_namespace(Decl))
-
-
-#print("=== Global var")
-
-#for Declaration in Global_Namespace.variables():
-#    if (Get_Name(Declaration).startswith("lv_")):
-#        print(Get_Name(Declaration))
-
-# print("=== Global const")
-
-# for Declaration in Global_Namespace.declarations:
-#     if (Get_Name(Declaration).startswith("LV_")):
-#        print(Get_Name(Declaration))
-
-# print("== Main header file")
-
 Main_Header_File = Basics.Open_Main_Header_File()
 
 Main_Header_File.write("#pragma once\n\n")
@@ -113,3 +77,10 @@ for _, Name in Widget.Widget_Class.List:
 Main_Header_File.write("#include \"Display.hpp\"")
 
 Main_Header_File.close()
+
+# Format using clang
+
+print("clang-format -i " + Paths.Get_Bindings_Folder_Path() + "/*.hpp")
+
+os.system("clang-format -i " + Paths.Get_Bindings_Folder_Path() + "/*.hpp")
+os.system("clang-format -i " + Paths.Get_Bindings_Folder_Path() + "*.cpp")
