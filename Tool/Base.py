@@ -132,20 +132,11 @@ class Base_Class:
     def Write_Header_Footer(self):
 
         # - Other methods
+      
+        # - - Custom
 
-        # - - Operators
-
-        self.Write_Line('H', "inline operator " + self.Get_This_Type() + "() { return this->" + self.Get_This_Name() + "; };")
-        self.Write_Line('H', "inline operator const " + self.Get_This_Type() + "() const { return this->" + self.Get_This_Name() + "; };")
-
-        # - - - Constructor
-
-        if self.Heritage:
-            self.Write_Line('H', "inline " + self.Get_Class_Name() + "(" + self.Get_This_Type() + " " + self.Get_This_Name() + ") : " + self.Heritage + "(" + self.Get_This_Name() + ") { };")
-        else:
-            self.Write_Line('H', "inline " + self.Get_Class_Name() + "(" + self.Get_This_Type() + " " + self.Get_This_Name() + ") : " + self.Get_This_Name() + "(" + self.Get_This_Name() + ") { };")
-
-        # - - -  Custom
+        if self.Get_This_Type().endswith("*") and not self.Heritage:
+            self.Write_Line('H', "inline " + "void Clear_Pointer() { " + self.Get_This_Name() + " = NULL; };")
 
         if self.Custom_Methods:
             for Prototype, Definition in self.Custom_Methods:
@@ -153,6 +144,27 @@ class Base_Class:
                     self.Write_Line('H', "inline " + Prototype + ";")
                 else:    
                     self.Write_Line('H', "inline " + Prototype + " { " + Definition + " };")
+
+        # - - Operators
+
+        self.Write_Line('H', "inline operator " + self.Get_This_Type() + "() { return this->" + self.Get_This_Name() + "; };")
+        self.Write_Line('H', "inline operator const " + self.Get_This_Type() + "() const { return this->" + self.Get_This_Name() + "; };")
+
+        # - - Constructor
+
+        if self.Heritage:
+            self.Write_Line('H', "inline " + self.Get_Class_Name() + "(" + self.Get_This_Type() + " " + self.Get_This_Name() + ") : " + self.Heritage + "(" + self.Get_This_Name() + ") { };")
+        else:
+            self.Write_Line('H', "inline " + self.Get_Class_Name() + "(" + self.Get_This_Type() + " " + self.Get_This_Name() + ") : " + self.Get_This_Name() + "(" + self.Get_This_Name() + ") { };")
+
+        # - - - Move
+
+        if self.Get_This_Type().endswith("*"):
+            if self.Heritage:
+                self.Write_Line('H', "inline " + self.Get_Class_Name() + "(" + self.Get_Class_Name() + "&& Object_To_Move) : " + self.Heritage + "(Object_To_Move) { };")
+            else:
+                self.Write_Line('H', "inline " + self.Get_Class_Name() + "(" + self.Get_Class_Name() + "&& Object_To_Move) : " + self.Get_This_Name() + "(Object_To_Move." + self.Get_This_Name() + ") { Object_To_Move.Clear_Pointer(); };")
+
 
 
         # - Attributes
@@ -162,7 +174,7 @@ class Base_Class:
                 self.Write_Line('H', Custom_Attribute)
 
         if not self.Heritage:
-            self.Write_Line('H', "protected:")
+            #self.Write_Line('H', "protected:")
 
             self.Write_Line('H', self.Get_This_Type() + " " + self.Get_This_Name() + ";")
 

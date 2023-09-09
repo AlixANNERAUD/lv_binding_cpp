@@ -96,13 +96,10 @@ class Widget_Class(Base.Base_Class):
 
         if self.Get_Name() == "Object":
             Custom_Methods.append(("static Object_Class Get_Current_Screen()", "return lv_scr_act();"))
-            Custom_Methods.append(("lv_obj_t* Get_LVGL_Pointer() const", "return LVGL_Pointer;"))
-            Custom_Methods.append(("void Clear_Pointer()", "LVGL_Pointer = NULL;"))
 
         # - Constructors
 
         Custom_Methods.append((self.Get_Class_Name() + "() = delete", ""))
-        Custom_Methods.append((self.Get_Class_Name() + "(" + self.Get_Class_Name() + "&& Object_To_Move) : Object_Class((lv_obj_t*)Object_To_Move)", "Object_To_Move.Clear_Pointer();"))
 
         Custom_Attributes = ["static const lv_obj_class_t& Class;"]
 
