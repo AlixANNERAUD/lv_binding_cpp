@@ -5,39 +5,75 @@ from pygccxml import parser as Parser
 import re
 
 import Widget
-import Style
-import Color
-import Event
-import Group
-import Area
-import Timer
 
 import Paths
 
 import Type
 import Variable
 
+import Log
+import Time
+
+import Casing
+
 class Method_Class:
 
-    Header_Files_List = []
-
     Documentations_List = []
+    
+    def Initialize():
+        Log.Title("Initializing Method_Class")
+        
+        Timer = Time.Timer_Class()
 
-    def Find_In_Files(Regex):
-        Results = []
+        # - Find all LVGL header files
+        Log.Information("Finding header files...")
+        Header_Files_List = Paths.Find_File_By_Extension(Paths.Get_LVGL_Sources_Path(), ".h")
+        Log.Information("Found " + str(len(Header_Files_List)) + " header files")
 
-        for File in Method_Class.Header_Files_List:
+        # - Find and parse all documented functions in header files
+        Log.Information("Find and parse documentation in header files...")
+        #Function_Documentation_Regex = r"(\/\*\*\n[\w\s\*\n@.,\`\"\:\'\;\(\)]+\*\/)\n[\w\*\s]+\s(lv_[\w\s\*\n@.]+)\([\w\s\*\n@.,]+\)"
+        for File in Header_Files_List:
             with open(File, "r", encoding="utf-8") as File:
-                File_Content = File.read()
-                for match in re.finditer(Regex, File_Content):
-                    Results.append((match.group(2), match.group(1)))
+                State = 0
 
-        return Results
+                Inside_Documentation_State = 1
+                Inside_Function_State = 2
 
-    def Initialize_Header_Files_List():
-        Method_Class.Header_Files_List = Paths.Find_File_By_Extension(Paths.Get_LVGL_Sources_Path(), ".h")
-
-        Method_Class.Documentations_List = Method_Class.Find_In_Files(r"(\/\*\*\n[\w\s\*\n@.,`\"]+\*\/)\n[\w\*\s]+\s(lv_[\w\s\*\n@.]+)\([\w\s\*\n@.,]+\)\;")
+                Documentation = ""
+                for Line in File:
+                    # - If we should be inside a function prototype
+                    if State == Inside_Function_State:
+                        # - Try to find function name
+                        Function = re.search(r" (lv_[\w]+)\(", Line)
+                        # - If we found a function name we can save the documentation
+                        if Function:
+                            Function_Name = Function.group(1)
+                            Method_Class.Documentations_List.append((Function_Name, Documentation))
+                        
+                        Documentation = ""
+                        State = 0
+                    # - If have a start anchor for documentation
+                    elif Line.startswith("/**"):
+                        State = Inside_Documentation_State
+                        Documentation = Line
+                    # - If we are inside documentation
+                    elif State == Inside_Documentation_State:
+                        # - If we have a line of documentation add it to the documentation variable
+                        if Line.startswith(" * "):
+                            Documentation += Line
+                        # - If we have an end anchor for documentation we can save the documentation check for function prototype
+                        elif Line.endswith(" */\n"):
+                            Documentation += Line[:-1]
+                            State = Inside_Function_State
+                        # - If we have a line that is not a documentation line we can reset the state
+                        else:
+                            State = 0
+                            Documentation = ""
+                        
+        Log.Information("Found " + str(len(Method_Class.Documentations_List)) + " documented functions in header files")
+                
+        Log.Success("Method_Class initialized in " + Timer.Get_Time())
 
     def __init__(self, Widget, Declaration):
         self.Declaration = Declaration
@@ -45,10 +81,19 @@ class Method_Class:
 
         self.Documentation = ""
 
+        # - Find function documentation for this method
         for Function_Name, Documentation in Method_Class.Documentations_List:
             if Function_Name == self.Get_Old_Name():
                 self.Documentation = Documentation
+                # - Remove "this" argument from documentation
+                if self.Has_This_Argument():
+                    self.Documentation = re.sub(r"\s\*\s@param\s[\w\s\"\'\`:']*\n", "", self.Documentation, count=1)
+        
+                # - Convert casing of arguments name
+                self.Documentation = re.sub(r"\s\*\s@param\s([\w]*)\s", lambda Match: " * @param " + Casing.Convert(Match.group(1)) + " ", self.Documentation)
+                
                 break
+                
 
     def Get_Old_Name(self):
         return self.Declaration.name
@@ -62,7 +107,7 @@ class Method_Class:
 
         New_Method_Name = self.Get_Old_Name().replace("lv_" + self.Widget.Get_Old_Type_Name() + "_", "")
 
-        return re.sub(r"(^|_)([a-z])", lambda m: m.group(1) + m.group(2).upper(), New_Method_Name)
+        return Casing.Convert(New_Method_Name)
     
     def Is_Constructor(self):
         return self.Widget.Is_Constructor(self.Get_Old_Name())
