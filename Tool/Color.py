@@ -1,14 +1,3 @@
-from pygccxml import declarations as Declarations
-from pygccxml import parser as Parser
-from pygccxml import utils
-
-import os
-
-import Basics
-import Paths
-
-import Method
-import Type
 import Base
 
 class Color_Class(Base.Base_Class):

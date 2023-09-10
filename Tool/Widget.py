@@ -13,6 +13,9 @@ import Type
 
 import Base
 
+import Log
+import Time
+
 # Currently ignoring widgets due to ambiguous naming
     
 
@@ -149,6 +152,12 @@ class Widget_Class(Base.Base_Class):
         return Base.Base_Class.Has_Method_This_Argument(self, Method) and not(Method.Is_Constructor())
 
     def Generate_All_Bindings(Namespace):
+        Log.Information("Generating all bindings for " + str(len(Widget_Class.List)) + " widgets...")
+
+        Timer = Time.Timer_Class()
+
         for Widget_Old_Name, _ in Widget_Class.List:
             W = Widget_Class(Widget_Old_Name, Namespace)
             W.Generate_Bindings()
+
+        Log.Success("All bindings for widgets generated in " + Timer.Get_Time())

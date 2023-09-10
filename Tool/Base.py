@@ -9,6 +9,8 @@ import Type
 
 class Base_Class:
 
+    Header_Files_List = []
+
     def __init__(self, Old_Name : str, New_Name : str, Namespace, This_Attribute_Type : str, This_Attribute_Name : str, Dependencies = None, Heritage = None, Custom_Methods = None, Custom_Attributes = None):
         self.Header_File_Scope = 0
         self.Source_File_Scope = 0
@@ -24,6 +26,7 @@ class Base_Class:
         Header_File_Path = os.path.join(Paths.Get_Bindings_Header_Path(), self.Name + ".hpp")
         if os.path.exists(Header_File_Path):
             os.remove(Header_File_Path)
+        Base_Class.Header_Files_List.append(self.Name + ".hpp")
         Source_File_Path = os.path.join(Paths.Get_Bindings_Source_Path(), self.Name + ".cpp")
         if os.path.exists(Source_File_Path):
             os.remove(Source_File_Path)
@@ -70,14 +73,7 @@ class Base_Class:
         return self.Name + "_Type"
 
     def Write_Line(self, File : str, Line : str = ""):
-        if File[0] == 'H' or File[0] == 'h':
-            for i in range(self.Header_File_Scope):
-                Line = "\t" + Line
-        elif File[0] == 'S' or File[0] == 's':
-            for i in range(self.Source_File_Scope):
-                Line = "\t" + Line
-        Line += "\n"
-        self.Write(File, Line)
+        self.Write(File, Line + "\n")
 
     def Write(self, File : str, String : str):
         if File[0] == 'H' or File[0] == 'h':
@@ -91,16 +87,7 @@ class Base_Class:
         else:
             self.Write(File, "{")
 
-        if File[0] == 'H' or File[0] == 'h':
-            self.Header_File_Scope += 1
-        elif File[0] == 'S' or File[0] == 's':
-            self.Source_File_Scope += 1
-
     def Decrease_Scope(self, File : str, New_Line : bool = True):
-        if File[0] == 'H' or File[0] == 'h':
-            self.Header_File_Scope -= 1
-        elif File[0] == 'S' or File[0] == 's':
-            self.Source_File_Scope -= 1    
         if New_Line:
             self.Write_Line(File, "}")
         else:
@@ -178,11 +165,11 @@ class Base_Class:
 
             self.Write_Line('H', self.Get_This_Type() + " " + self.Get_This_Name() + ";")
 
-        self.Decrease_Scope('H')
+        self.Write_Line('H', "}")
 
         self.Write_Line('H', self.Get_Type_Name() + ";")
         
-        self.Decrease_Scope('H')
+        self.Write_Line('H', "}")
 
 
 

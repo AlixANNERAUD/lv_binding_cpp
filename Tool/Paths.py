@@ -26,6 +26,9 @@ def Get_lv_cpp_Path():
 def Get_Bindings_Folder_Path():
     return os.path.join(os.path.dirname(__file__), '..', 'LVGL_Cpp')
 
+def Get_Bindings_Documentation_Path():
+    return os.path.join(Get_Bindings_Folder_Path(), 'documentation')
+
 def Get_Bindings_Header_Path():
     return os.path.join(Get_Bindings_Folder_Path(), 'include')
 

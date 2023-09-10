@@ -1,11 +1,11 @@
-from pygccxml import utils
-from pygccxml import declarations as Declarations
-from pygccxml import parser as Parser
-
 import os
 import shutil
+import subprocess
 from Basics import *
 import Type
+
+import Format
+import Parse
 
 import Widget
 import Style
@@ -22,22 +22,15 @@ import Method
 import Paths
 import Basics
 
-# - PyGCCXML configuration
+import Documentation
 
-if os.name == "nt":
-    os.system("cls")
-else:
-    os.system("clear")
+import Log
 
-Generator_Path, Generator_Name = utils.find_xml_generator()
+import Main_Header
 
-XML_Generator_Configuration = Parser.xml_generator_configuration_t(
-    xml_generator_path=Generator_Path,
-    xml_generator=Generator_Name)
+import Time
 
-# - Parse LVGL header
-
-Decl = Parser.parse([Paths.Get_LVGL_Header_Path()], XML_Generator_Configuration)
+T = Time.Timer_Class()
 
 # - Create generation folder
 
@@ -45,9 +38,14 @@ Paths.Create_Bindings_Folder(True)
 
 # - Explore 
 
-Method.Method_Class.Initialize_Header_Files_List()
+Method.Method_Class.Initialize()
 
-Global_Namespace = Declarations.get_global_namespace(Decl)
+Global_Namespace = Parse.Parse_LVGL()
+
+if Global_Namespace is None:
+    exit()
+
+Log.Title("Generating bindings")
 
 Widget.Widget_Class.Generate_All_Bindings(Global_Namespace)
 
@@ -65,22 +63,10 @@ Timer.Timer_Class(Global_Namespace).Generate_Bindings()
 
 Display.Display_Class(Global_Namespace).Generate_Bindings()
 
-Main_Header_File = Basics.Open_Main_Header_File()
+Main_Header.Generate()
 
-Main_Header_File.write("#pragma once\n\n")
+Format.Format_Files()
 
-Main_Header_File.write("#include \"lvgl.h\"\n\n")
+Documentation.Generate()
 
-for _, Name in Widget.Widget_Class.List:
-    Main_Header_File.write("#include \"" + Name + ".hpp\"\n")
-
-Main_Header_File.write("#include \"Display.hpp\"")
-
-Main_Header_File.close()
-
-# Format using clang
-
-print("clang-format -i " + Paths.Get_Bindings_Folder_Path() + "/*.hpp")
-
-os.system("clang-format -i " + Paths.Get_Bindings_Folder_Path() + "/*.hpp")
-os.system("clang-format -i " + Paths.Get_Bindings_Folder_Path() + "*.cpp")
+Log.Title("[bold green]Bindings generated in " + T.Get_Time() + "[/bold green]")

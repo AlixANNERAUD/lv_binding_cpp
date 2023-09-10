@@ -2,9 +2,11 @@ from pygccxml import utils
 from pygccxml import declarations
 from pygccxml import parser as Parser
 
+import re
+
 import Type
 
-import re
+import Casing
 
 class Variable_Class():
     
@@ -16,7 +18,7 @@ class Variable_Class():
         return self.Name
 
     def Get_New_Name(self):
-        return re.sub(r"(^|_)([a-z])", lambda m: m.group(1) + m.group(2).upper(), self.Name)
+        return Casing.Convert_Alix_Casing(self.Get_Name())
 
     def Get_Type(self):
         return self.Type    
